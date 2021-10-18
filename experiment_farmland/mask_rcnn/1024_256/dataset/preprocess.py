@@ -7,10 +7,7 @@ from skimage import io as skio
 from imgaug.augmentables.polys import Polygon
 from osgeo import gdal, osr, ogr
 from multiprocessing import Pool
-import sys
-
-sys.path.append("..")
-from utils.common import bbox_double2int, seg_double2int, get_mean_std, is_lowimg
+from common import bbox_double2int, seg_double2int, get_mean_std, is_lowimg
 
 
 # 真值以shp的形式提供
@@ -111,7 +108,7 @@ def data_process(orimg_path, dstimg_dir, cfg, start=0, shpdir=None):
     return start, clip_list, json_list, statis
 
 
-def generate_coco_json(json_lists, height, width):
+def generate_coco_json(json_lists, cfg):
     json_dict = {"images": [], "annotations": [], "categories": []}
     idx = 0
 
@@ -126,8 +123,8 @@ def generate_coco_json(json_lists, height, width):
         images_dict = {}
 
         # images_dict
-        images_dict["height"] = height
-        images_dict["width"] = width
+        images_dict["height"] = cfg.HEIGHT
+        images_dict["width"] = cfg.WIDTH
         # 与shift_upper-left顺序一致
         images_dict["id"] = int(os.path.basename(json["imagePath"]).split('.')[0])
         images_dict["file_name"] = json["imagePath"].split('/')[-1]

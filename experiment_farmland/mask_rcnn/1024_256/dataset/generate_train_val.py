@@ -3,12 +3,9 @@ import os
 import random
 import shutil
 from preprocess import generate_coco_json, data_process_multi
-import sys
 import time
-
-sys.path.append("..")
-from utils.common import is_dir, save_json, get_imglist
-from utils.config import Config
+from common import is_dir, save_json, get_imglist
+from config import Config
 
 
 def move_val_img(trainimg_dir, valimg_dir, val_list):
@@ -24,7 +21,10 @@ def move_val_img(trainimg_dir, valimg_dir, val_list):
 # single process
 # ------------------------------------------------
 
-def split_train_val(seed, ratio, num):
+def split_train_val(num):
+    seed = 0
+    ratio = 0.7
+
     num_list = [n for n in range(num)]
     random.seed(seed)
     random.shuffle(num_list)
@@ -131,37 +131,47 @@ if __name__ == '__main__':
     start_time = time.time()
     cfg = Config()
 
-    is_dir(cfg.annotations_dir)
-    is_dir(cfg.train_clpimg_dir)
-    is_dir(cfg.val_clpimg_dir)
-    is_dir(os.path.dirname(cfg.pred_path))
+    annotations_dir = rf"{cfg.COCO_BASEDIR}/annotations"
+    train_orimg_dir = rf"{cfg.ORI_DIR}/train/image"
+    train_clpimg_dir = rf"{cfg.COCO_BASEDIR}/train"
+    train_orilabel_dir = rf"{cfg.ORI_DIR}/train/label"
+    train_statis_path = rf"{cfg.COCO_BASEDIR}/annotations/train_statistics.json" 
+    train_shiftul_path = rf"{cfg.COCO_BASEDIR}annotations/train_shift_ul.json"
+    trainjson_path = rf"{cfg.COCO_BASEDIR}/annotations/train.json"
+    val_clpimg_dir = rf"{cfg.COCO_BASEDIR}/val"
+    valjson_path = rf"{cfg.COCO_BASEDIR}/annotations/val.json"
+    pred_path = rf"{cfg.RES_BASEDIR}/output/results/seg/mask_rcnn_{cfg.MODE}_results_{cfg.EPOCH}.segm.json"
+    is_dir(annotations_dir)
+    is_dir(train_clpimg_dir)
+    is_dir(val_clpimg_dir)
+    is_dir(os.path.dirname(pred_path))
 
-    shift_ul, json_lists, statis_dict, start_idx = get_train_data(cfg.train_orimg_dir, cfg.train_clpimg_dir, cfg.train_orilabel_dir, cfg)
+    shift_ul, json_lists, statis_dict, start_idx = get_train_data(train_orimg_dir, train_clpimg_dir, train_orilabel_dir, cfg)
     print("Generate train image and label successfully")
 
-    save_json(cfg.train_statis_path, statis_dict)
+    save_json(train_statis_path, statis_dict)
     print("Generate train statistics successfully")
 
-    save_json(cfg.train_shiftul_path, shift_ul)
+    save_json(train_shiftul_path, shift_ul)
     print("Generate train shift_ul successfully")
 
     # val json
-    train_list, val_list = split_train_val(cfg.SEED, cfg.RATIO, start_idx)
+    train_list, val_list = split_train_val(start_idx)
     train_json, val_json = get_train_val_json(val_list, json_lists)
 
-    rename_img(cfg.train_orimg_dir, cfg.train_clpimg_dir, cfg)
+    rename_img(train_orimg_dir, train_clpimg_dir, cfg)
     print("Rename image successfully")
 
     # val image
-    move_val_img(cfg.train_clpimg_dir, cfg.val_clpimg_dir, val_list)
+    move_val_img(train_clpimg_dir, val_clpimg_dir, val_list)
     print("Generate val image and label successfully")
 
-    train_json = generate_coco_json(train_json, cfg.HEIGHT, cfg.WIDTH)
-    val_json = generate_coco_json(val_json, cfg.HEIGHT, cfg.WIDTH)
+    train_json = generate_coco_json(train_json, cfg)
+    val_json = generate_coco_json(val_json, cfg)
 
-    save_json(cfg.trainjson_path, train_json)
+    save_json(trainjson_path, train_json)
     print("Generate train json successfully")
-    save_json(cfg.valjson_path, val_json)
+    save_json(valjson_path, val_json)
     print("Generate val json successfully")
 
     end_time = time.time()

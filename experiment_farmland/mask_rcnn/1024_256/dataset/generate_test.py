@@ -3,11 +3,8 @@ import os
 import time
 from preprocess import generate_coco_json, data_process_multi
 from generate_train_val import rename_img
-import sys
-
-sys.path.append("..")
-from utils.common import is_dir, save_json, get_imglist
-from utils.config import Config
+from common import is_dir, save_json, get_imglist
+from config import Config
 
 
 def get_inputs(orimg_dir, dstimg_dir, cfg):
@@ -54,23 +51,29 @@ if __name__ == '__main__':
     start_time = time.time()
     cfg = Config()
 
-    is_dir(cfg.test_clpimg_dir)
-    is_dir(os.path.dirname(cfg.test_shiftul_path))
+    test_orimg_dir = rf"{cfg.ORI_DIR}/test/image"
+    test_clpimg_dir = rf"{cfg.COCO_BASEDIR}/test"
+    test_shiftul_path = rf"{cfg.COCO_BASEDIR}/annotations/test_shiftul.json"
+    test_statis_path = rf"{cfg.COCO_BASEDIR}/annotations/test_statistics.json"
+    testjson_path = rf"{cfg.COCO_BASEDIR}/annotations/test.json"
 
-    shift_ul, json_lists, statistic_dict, _ = generate_test_data(cfg.test_orimg_dir, cfg.test_clpimg_dir, cfg)
+    is_dir(test_clpimg_dir)
+    is_dir(os.path.dirname(test_shiftul_path))
+
+    shift_ul, json_lists, statistic_dict, _ = generate_test_data(test_orimg_dir, test_clpimg_dir, cfg)
     print("Generate test image successfully")
 
-    rename_img(cfg.test_orimg_dir, cfg.test_clpimg_dir, cfg)
+    rename_img(test_orimg_dir, test_clpimg_dir, cfg)
     print("Rename image successfully")
 
-    save_json(cfg.test_statis_path, statistic_dict)
+    save_json(test_statis_path, statistic_dict)
     print("Generate test statistics successfully")
 
-    save_json(cfg.test_shiftul_path, shift_ul)
+    save_json(test_shiftul_path, shift_ul)
     print("Generate test shift_ul successfully")
 
     test_json = generate_coco_json(json_lists, cfg.HEIGHT, cfg.WIDTH)
-    save_json(cfg.testjson_path, test_json)
+    save_json(testjson_path, test_json)
     print("Generate test json successfully")
 
     end_time = time.time()

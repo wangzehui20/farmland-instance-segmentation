@@ -7,35 +7,35 @@ import numpy as np
 from tqdm import tqdm
 from demo_prepare import show_det_result
 from demo_prepare_gt import show_gt_result
-import sys
-
-sys.path.append('..')
-from utils.common import is_dir, open_json
-from utils.config import Config
-
-cfg = Config()
+from ..dataset.common import is_dir, open_json
+from ..dataset.config import Config
 # BaseDetector.show_result
 
 
-def demo(img_dir, demo_dir, model):
+def demo(img_dir, demo_dir, val_demonopost_dir, valjson_path, val_gt_dir, model, cfg):
     # predict
     img_list = os.listdir(img_dir)
     imgs_path = []
     for img in img_list:
         imgs_path.append(os.path.join(img_dir, img))
     for img_path in tqdm(imgs_path, total=len(imgs_path)):
+        # gt
+        anns, val_info = get_val_info(valjson_path)
+        if os.path.basename(img_path) not in val_info.keys(): continue
+        bbox, segm = get_gt(anns, val_info, os.path.basename(img_path), cfg)
+        gt = ([bbox],[segm])
+        show_gt_result(img=img_path, result=gt, show=True, score_thr=cfg.SCORE_THRED,
+                                    out_file=os.path.join(val_gt_dir, os.path.basename(img_path)))
+
+        # pred
         result = inference_detector(model, img_path)
+        ## no post process
+        show_det_result(img=img_path, result=result, show=True, score_thr=cfg.SCORE_THRED,
+                                    out_file=os.path.join(val_demonopost_dir, os.path.basename(img_path)))
+        ## post process
         result = pred_post(result)
         show_det_result(img=img_path, result=result, show=True, score_thr=cfg.SCORE_THRED,
                                     out_file=os.path.join(demo_dir, os.path.basename(img_path)))
-
-        # gt
-        anns, val_info = get_val_info(cfg.valjson_path)
-        if os.path.basename(img_path) not in val_info.keys(): continue
-        bbox, segm = get_gt(anns, val_info, os.path.basename(img_path))
-        gt = ([bbox],[segm])
-        show_gt_result(img=img_path, result=gt, show=True, score_thr=cfg.SCORE_THRED,
-                                    out_file=os.path.join(cfg.val_gt_dir, os.path.basename(img_path)))
 
 
 def get_val_info(path):
@@ -49,18 +49,18 @@ def get_val_info(path):
     return anns, val_info
 
 
-def get_gt(annotations, info, name):
+def get_gt(annotations, info, name, cfg):
     bbox= []
     segm = []
     for i in info[name]:
         annotations[i]["bbox"].append(1)
         bbox.append(annotations[i]["bbox"])
-        img = get_gt_img(annotations[i]["segmentation"][0])
+        img = get_gt_img(annotations[i]["segmentation"][0], cfg)
         segm.append(img)
     return np.array(bbox, dtype=np.float32), segm
 
 
-def get_gt_img(seg):
+def get_gt_img(seg, cfg):
     img = np.zeros((cfg.HEIGHT, cfg.WIDTH))
     seg_array = np.array([[seg[i:i+2][0], seg[i:i+2][1]] for i in range(0, len(seg), 2)])
     cv2.fillPoly(img, [seg_array], 1)
@@ -95,12 +95,19 @@ def pred_post(result):
 
 
 if __name__ == '__main__':
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    cfg = Config()
 
-    is_dir(cfg.val_demo_dir)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    val_clpimg_dir = rf"{cfg.COCO_BASEDIR}/val"
+    val_demonopost_dir = rf'{cfg.RES_BASEDIR}/output/val_demo_nopost'
+    val_demo_dir = rf"{cfg.RES_BASEDIR}/output/val_demo"
+    valjson_path = rf"{cfg.COCO_BASEDIR}/annotations/val.json"
+    val_gt_dir = rf"{cfg.RES_BASEDIR}/output/val_gt"
+    is_dir(val_demonopost_dir)
+    is_dir(val_demo_dir)
 
     config_file = r'../code/mask_rcnn_res50/mask_rcnn_r50_fpn_1x_coco.py'
-    checkpoint_file = r'/data/data/farm_land/best_model/epoch_11_score_0_53068.pth'
+    checkpoint_file = r'/data/data/farm_land/best_model/best.pth'
 
     model = init_detector(config_file, checkpoint_file, device)
-    demo(cfg.val_clpimg_dir, cfg.val_demo_dir, model)
+    demo(val_clpimg_dir, val_demo_dir, val_demonopost_dir, valjson_path, val_gt_dir, model, cfg)

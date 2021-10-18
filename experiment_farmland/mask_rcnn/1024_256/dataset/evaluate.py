@@ -9,13 +9,8 @@ from osgeo import gdal
 from removeshp_overlap import is_union
 from tabulate import tabulate
 from tqdm import tqdm
-from collections import Counter
-
-sys.path.append('..')
-from utils.config import Config
-from utils.common import open_json, is_dir, get_shplist, get_imglist
-
-cfg = Config()
+from config import Config
+from common import open_json, is_dir, get_shplist, get_imglist
 
 
 def get_gt(jsonpath, shiftul_path, orimg_dir, valshp_dir):
@@ -193,7 +188,7 @@ def evaluate(valjson_path, train_shiftul_path, train_orimg_dir, val_gtshp_dir, u
     print("pred done")
     tp_dict = cal_tp(gt_dict, pred_dict)
     print("calculate tp done")
-    iou = cal_iou(gt_dict, pred_dict, cfg.train_orimg_dir)
+    iou = cal_iou(gt_dict, pred_dict, train_orimg_dir)
     print("calculate iou done")
     score = cal_score(tp_dict, score_dict, iou, n_gt)
     print("calculate score done")
@@ -202,7 +197,14 @@ def evaluate(valjson_path, train_shiftul_path, train_orimg_dir, val_gtshp_dir, u
 
 
 if __name__ == '__main__':
-    is_dir(cfg.val_gtshp_dir)
-    evaluate(cfg.valjson_path, cfg.train_shiftul_path, cfg.train_orimg_dir, cfg.val_gtshp_dir, cfg.unionshp_dir)
+    cfg = Config()
+    
+    train_orimg_dir = rf"{cfg.ORI_DIR}/train/image"
+    val_gtshp_dir = rf"{cfg.RES_BASEDIR}/output/val_gtshp/{cfg.EPOCH}"
+    valjson_path = rf"{cfg.COCO_BASEDIR}/annotations/val.json"
+    train_shiftul_path = rf"{cfg.COCO_BASEDIR}annotations/train_shiftul.json"
+    unionshp_dir = rf"{cfg.RES_BASEDIR}/output/union_shp_iou/{cfg.MODE}/{cfg.EPOCH}"
+    is_dir(val_gtshp_dir)
+    evaluate(valjson_path, train_shiftul_path, train_orimg_dir, val_gtshp_dir, unionshp_dir)
     
 

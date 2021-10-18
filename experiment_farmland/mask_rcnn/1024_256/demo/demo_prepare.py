@@ -1,3 +1,4 @@
+from IPython.terminal.embed import embed
 import matplotlib.pyplot as plt
 import torch
 import numpy as np
@@ -75,6 +76,8 @@ def show_det_result(img,
     # if out_file specified, do not show image in window
     if out_file is not None:
         show = False
+    if len(labels) == 0:
+        return None
     # draw bounding boxes
     img = imshow_det_bboxes(
         img,
@@ -140,6 +143,7 @@ def imshow_det_bboxes(img,
     Returns:
         ndarray: The image with bboxes drawn on it.
     """
+
     assert bboxes.ndim == 2, \
         f' bboxes ndim should be 2, but its ndim is {bboxes.ndim}.'
     assert labels.ndim == 1, \

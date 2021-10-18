@@ -2,9 +2,6 @@ import json
 import os
 import numpy as np
 from collections import Counter
-from utils.config import Config
-
-cfg = Config()
 
 
 def is_dir(dir):
@@ -64,8 +61,9 @@ def get_mean_std(img):
 
 
 def is_lowimg(img):
+    RMBACKGROUND_THRED = 0.2
     total = img.shape[0] * img.shape[1] * img.shape[2]
     counter = Counter(img.ravel().tolist())
-    if counter[0] / total > cfg.RMBACKGROUND_THRED:
+    if counter[0] / total > RMBACKGROUND_THRED:
         return True
     return False

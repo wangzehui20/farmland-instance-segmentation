@@ -9,13 +9,9 @@ from tqdm import tqdm
 from osgeo import gdal
 from shapely.ops import unary_union
 from multiprocessing import Pool
-import sys
+from common import is_dir, get_shplist
+from config import Config
 
-sys.path.append("..")
-from utils.common import is_dir, get_shplist
-from utils.config import Config
-
-cfg = Config()
 os.environ['PROJ_LIB'] = '/opt/conda/pkgs/proj-6.2.1-haa6030c_0/share/proj'
 
 
@@ -108,7 +104,7 @@ def is_union(polygon_list):
 # ------------------------------------------------
 
 # 1. merge overlap polygons and remove most included polygon
-def cal_union_update(polygon_list):
+def cal_union_update(polygon_list, cfg):
     # update union polygon
     discard_idx = []
     # reversed oreder
@@ -195,7 +191,7 @@ def rm_overlap(polygon, polygon_pending, thred=0.8):
     return True if inter.area / polygon.area > thred else False
 
 
-def polygon_union(shp_path):
+def polygon_union(shp_path, cfg):
     reader = shapefile.Reader(shp_path).shapeRecords()
     reader.sort(key=lambda rd: rd.record["scores"])
     polygon_list = []
@@ -209,7 +205,7 @@ def polygon_union(shp_path):
     # discard_idx = cal_union(polygon_list)
 
     print("start merge overlap polygons and remove most included polygon...")
-    discard_idx, polygon_list = cal_union_update(polygon_list)
+    discard_idx, polygon_list = cal_union_update(polygon_list, cfg)
     for i in range(len(reader)):
         if i not in discard_idx:
             union_polygon_list.append(polygon_list[i])
@@ -241,16 +237,17 @@ def remove_overlap(outshp_dir, unionshp_dir):
         shp_path = os.path.join(outshp_dir, shp)
         outshp_path = os.path.join(unionshp_dir, shp)
         # polygon_list,  scores_list = bbox_iou(test_orimg_dir, shp_path, cfg)
-        polygon_list, scores_list = polygon_union(shp_path)
+        polygon_list, scores_list = polygon_union(shp_path, cfg)
         shp_data = GDAL_shp_Data(outshp_path)
         shp_data.set_shapefile_data(polygon_list, scores_list)
 
 
-def remove_overlap_multi(outshp_dir, unionshp_dir):
+def remove_overlap_multi(outshp_dir, unionshp_dir, cfg):
     shp_list = get_shplist(outshp_dir)
     shp_paths = [[os.path.join(outshp_dir, shp)] for shp in shp_list]
+    cfgs = [cfg for i in range(len(shp_list))]
     pool = Pool()
-    results = pool.starmap(polygon_union, shp_paths)
+    results = pool.starmap(polygon_union, list(zip(shp_paths, cfgs)))
     pool.close()
     pool.join()
     for i, shp in enumerate(shp_list):
@@ -261,10 +258,13 @@ def remove_overlap_multi(outshp_dir, unionshp_dir):
 
 if __name__ == '__main__':
     start_time = time.time()
+    cfg = Config()
 
-    is_dir(cfg.unionshp_dir)
-    # remove_overlap(cfg.out_shp_dir, cfg.union_shp_dir)
-    remove_overlap_multi(cfg.outshp_dir, cfg.unionshp_dir)
+    unionshp_dir = rf"{cfg.RES_BASEDIR}/output/union_shp_iou/{cfg.MODE}/{cfg.EPOCH}"
+    outshp_dir = rf"{cfg.RES_BASEDIR}/output/out_shp/{cfg.MODE}/{cfg.EPOCH}"
+    is_dir(unionshp_dir)
+    # remove_overlap(outshp_dir, union_shp_dir)
+    remove_overlap_multi(outshp_dir, unionshp_dir, cfg)
 
     end_time = time.time()
     print("time", end_time-start_time)
