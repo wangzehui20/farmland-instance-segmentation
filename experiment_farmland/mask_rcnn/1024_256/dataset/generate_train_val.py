@@ -136,7 +136,7 @@ if __name__ == '__main__':
     train_clpimg_dir = rf"{cfg.COCO_BASEDIR}/train"
     train_orilabel_dir = rf"{cfg.ORI_DIR}/train/label"
     train_statis_path = rf"{cfg.COCO_BASEDIR}/annotations/train_statistics.json" 
-    train_shiftul_path = rf"{cfg.COCO_BASEDIR}annotations/train_shift_ul.json"
+    train_shiftul_path = rf"{cfg.COCO_BASEDIR}/annotations/train_shiftul.json"
     trainjson_path = rf"{cfg.COCO_BASEDIR}/annotations/train.json"
     val_clpimg_dir = rf"{cfg.COCO_BASEDIR}/val"
     valjson_path = rf"{cfg.COCO_BASEDIR}/annotations/val.json"

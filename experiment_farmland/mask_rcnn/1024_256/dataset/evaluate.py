@@ -202,7 +202,7 @@ if __name__ == '__main__':
     train_orimg_dir = rf"{cfg.ORI_DIR}/train/image"
     val_gtshp_dir = rf"{cfg.RES_BASEDIR}/output/val_gtshp/{cfg.EPOCH}"
     valjson_path = rf"{cfg.COCO_BASEDIR}/annotations/val.json"
-    train_shiftul_path = rf"{cfg.COCO_BASEDIR}annotations/train_shiftul.json"
+    train_shiftul_path = rf"{cfg.COCO_BASEDIR}/annotations/train_shiftul.json"
     unionshp_dir = rf"{cfg.RES_BASEDIR}/output/union_shp_iou/{cfg.MODE}/{cfg.EPOCH}"
     is_dir(val_gtshp_dir)
     evaluate(valjson_path, train_shiftul_path, train_orimg_dir, val_gtshp_dir, unionshp_dir)

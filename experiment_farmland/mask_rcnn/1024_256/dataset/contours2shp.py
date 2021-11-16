@@ -85,7 +85,7 @@ if __name__ == '__main__':
 
     train_orimg_dir = rf"{cfg.ORI_DIR}/train/image"
     test_orimg_dir = rf"{cfg.ORI_DIR}/test/image"
-    train_shiftul_path = rf"{cfg.COCO_BASEDIR}annotations/train_shiftul.json"
+    train_shiftul_path = rf"{cfg.COCO_BASEDIR}/annotations/train_shiftul.json"
     test_shiftul_path = rf"{cfg.COCO_BASEDIR}/annotations/test_shiftul.json"
     pred_path = rf"{cfg.RES_BASEDIR}/output/results/seg/mask_rcnn_{cfg.MODE}_results_{cfg.EPOCH}.segm.json"
     outshp_dir = rf"{cfg.RES_BASEDIR}/output/out_shp/{cfg.MODE}/{cfg.EPOCH}"
